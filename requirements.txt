@@ -1,0 +1,10 @@
+apache-airflow
+langchain
+langgraph
+langchain-groq
+fastapi
+uvicorn
+psycopg2
+sqlalchemy
+prometheus-client
+slack-sdk

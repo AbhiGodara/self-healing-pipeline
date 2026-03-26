@@ -1,0 +1,53 @@
+self-healing-pipeline/
+│
+├── airflow/
+│   ├── dags/
+│   │   ├── data_ingestion_dag.py       # Main pipeline DAG
+│   │   ├── anomaly_detection_dag.py    # Triggers monitor agent
+│   │   └── cleanup_dag.py
+│   └── plugins/
+│
+├── agents/
+│   ├── monitor_agent.py                # Polls pipeline health
+│   ├── diagnostic_agent.py             # Reads logs, finds root cause
+│   ├── fix_agent.py                    # Takes automated actions
+│   ├── escalation_agent.py             # Human alert logic
+│   └── tools/
+│       ├── log_reader.py               # Tool: read Airflow logs
+│       ├── db_inspector.py             # Tool: query DB health
+│       ├── pipeline_restarter.py       # Tool: restart failed tasks
+│       ├── schema_validator.py         # Tool: validate data schema
+│       └── notifier.py                 # Tool: send Slack/email
+│
+├── orchestrator/
+│   └── langgraph_graph.py              # LangGraph state machine
+│
+├── api/
+│   ├── main.py                         # FastAPI app
+│   ├── routes/
+│   │   ├── incidents.py                # GET /incidents
+│   │   ├── audit.py                    # GET /audit-trail
+│   │   └── health.py                   # GET /pipeline/health
+│   └── models.py
+│
+├── database/
+│   ├── schema.sql
+│   └── audit_logger.py                 # Logs every agent action
+│
+├── frontend/
+│   └── src/
+│       ├── components/
+│       │   ├── IncidentFeed.tsx         # Live incident list
+│       │   ├── AgentTrace.tsx           # Shows agent reasoning
+│       │   ├── PipelineHealth.tsx       # Health status cards
+│       │   └── AuditLog.tsx
+│       └── App.tsx
+│
+├── tests/
+│   ├── test_monitor_agent.py
+│   ├── test_fix_agent.py
+│   └── simulate_failure.py             # Script to inject fake failures
+│
+├── docker-compose.yml
+├── .env.example
+└── README.md
