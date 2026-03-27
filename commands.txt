@@ -1,0 +1,8 @@
+1.  docker exec -it self_healing_pipeline-airflow-webserver-1 airflow dags trigger data_ingestion_pipeline
+    exp: it trigger the DAG in terminal in case airflow does not work on browser
+2.  docker exec -it self_healing_pipeline-postgres-1 psql -U pipeline_user -d pipeline_db -c "INSERT INTO raw_sales (product_id, quantity, price, sale_date) SELECT 'BAD-PRODUCT', -99, -1.0, CURRENT_DATE FROM generate_series(1,10);"
+    exp: it inserts the bad rows into the tables
+3.  docker exec -it self_healing_pipeline-postgres-1 psql -U pipeline_user -d pipeline_db -c "SELECT product_id, quantity, price FROM raw_sales WHERE sale_date = CURRENT_DATE ORDER BY quantity;"
+    exp: we see total rows in table
+4.  docker exec -it self_healing_pipeline-postgres-1 psql -U pipeline_user -d pipeline_db -c "SELECT COUNT(*) FROM raw_sales WHERE quantity <= 0;"
+    exp: to check bad rows

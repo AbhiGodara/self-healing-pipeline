@@ -8,3 +8,5 @@ psycopg2
 sqlalchemy
 prometheus-client
 slack-sdk
+dotenv
+ipykernel
