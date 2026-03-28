@@ -21,6 +21,7 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://pipeline_user:pipeline_pass@postgres/pipeline_db
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       AIRFLOW__WEBSERVER__SECRET_KEY: 'supersecretkey'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
     command: >
       bash -c "airflow db init && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com"
     restart: "no"
@@ -34,6 +35,7 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://pipeline_user:pipeline_pass@postgres/pipeline_db
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       AIRFLOW__WEBSERVER__SECRET_KEY: 'supersecretkey'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
     volumes:
       - ./airflow/dags:/opt/airflow/dags
     ports:
@@ -50,6 +52,7 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://pipeline_user:pipeline_pass@postgres/pipeline_db
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
       AIRFLOW__WEBSERVER__SECRET_KEY: 'supersecretkey'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
     volumes:
       - ./airflow/dags:/opt/airflow/dags
     command: airflow scheduler

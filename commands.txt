@@ -6,3 +6,24 @@
     exp: we see total rows in table
 4.  docker exec -it self_healing_pipeline-postgres-1 psql -U pipeline_user -d pipeline_db -c "SELECT COUNT(*) FROM raw_sales WHERE quantity <= 0;"
     exp: to check bad rows
+5.  docker exec -it self_healing_pipeline-postgres-1 psql -U pipeline_user -d pipeline_db -c "
+    INSERT INTO raw_sales (product_id, quantity, price, sale_date) VALUES
+    ('GOOD-001', 10, 25.50, CURRENT_DATE),
+    ('GOOD-002', 5, 100.00, CURRENT_DATE),
+    ('GOOD-003', 20, 75.99, CURRENT_DATE),
+    ('GOOD-004', 3, 49.99, CURRENT_DATE),
+    ('GOOD-005', 15, 200.00, CURRENT_DATE),
+    ('GOOD-006', 8, 33.33, CURRENT_DATE),
+    ('GOOD-007', 12, 88.88, CURRENT_DATE),
+    ('GOOD-008', 1, 500.00, CURRENT_DATE),
+    ('GOOD-009', 7, 60.00, CURRENT_DATE),
+    ('GOOD-010', 25, 15.00, CURRENT_DATE);"
+    exp: enter some good values
+6.  docker exec -it self_healing_pipeline-airflow-webserver-1 airflow dags list-runs -d data_ingestion_pipeline
+    exp: to check the list of runs
+7.  docker exec -it self_healing_pipeline-airflow-webserver-1 airflow dags pause data_ingestion_pipeline
+    exp: clear all queued runs
+8.  docker-compose restart airflow-scheduler
+    exp: restart the container
+9. docker exec -it self_healing_pipeline-airflow-webserver-1 airflow dags pause data_ingestion_pipeline
+    exp: pause

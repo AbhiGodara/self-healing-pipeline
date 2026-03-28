@@ -10,3 +10,4 @@ prometheus-client
 slack-sdk
 dotenv
 ipykernel
+asyncio
