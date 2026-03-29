@@ -22,28 +22,8 @@ def generate_order_id():
     return "ORD-" + "".join(random.choices(string.digits, k=6))
 
 def generate_sales_data(**context):
-    """Inserts 50 realistic e-commerce orders."""
-    conn = get_conn()
-    cur = conn.cursor()
-    for _ in range(50):
-        cur.execute("""
-            INSERT INTO raw_sales
-                (order_id, product_id, customer_id, quantity, price, category, region, order_date)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            generate_order_id(),
-            f"PROD-{random.randint(1, 50):03d}",
-            f"CUST-{random.randint(1, 200):04d}",
-            random.randint(1, 20),
-            round(random.uniform(5.0, 999.0), 2),
-            random.choice(CATEGORIES),
-            random.choice(REGIONS),
-            datetime.now().date()
-        ))
-    conn.commit()
-    cur.close()
-    conn.close()
-    print("Inserted 50 e-commerce orders.")
+    """Placeholder for manual/UI data ingestion. No auto-rows added."""
+    print("Skipping auto-generation. Expecting data to be ingested via Frontend API.")
 
 
 def validate_bad_values(**context):

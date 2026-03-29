@@ -20,14 +20,18 @@ llm = ChatGroq(
 # ── TOOLS ────────────────────────────────────────────────────
 
 @tool
-def delete_bad_rows() -> str:
-    """Deletes rows with negative quantity or price from raw_sales."""
+def quarantine_bad_rows() -> str:
+    """Moves rows with negative quantity or price to quarantine table."""
     try:
         result = subprocess.run([
             "docker", "exec",
             "self_healing_pipeline-postgres-1",
             "psql", "-U", "pipeline_user", "-d", "pipeline_db", "-c",
-            "DELETE FROM raw_sales WHERE quantity <= 0 OR price <= 0;"
+            """
+            CREATE TABLE IF NOT EXISTS quarantine_sales (LIKE raw_sales INCLUDING ALL);
+            INSERT INTO quarantine_sales SELECT * FROM raw_sales WHERE quantity <= 0 OR price <= 0;
+            DELETE FROM raw_sales WHERE quantity <= 0 OR price <= 0;
+            """
         ], capture_output=True, text=True, timeout=30)
 
         # Verify deletion worked
@@ -55,8 +59,8 @@ def restore_schema() -> str:
             """
             ALTER TABLE raw_sales ADD COLUMN IF NOT EXISTS price FLOAT;
             ALTER TABLE raw_sales ADD COLUMN IF NOT EXISTS quantity INTEGER;
-            ALTER TABLE raw_sales ADD COLUMN IF NOT EXISTS product_id VARCHAR(20);
-            ALTER TABLE raw_sales ADD COLUMN IF NOT EXISTS sale_date DATE;
+            ALTER TABLE raw_sales ADD COLUMN IF NOT EXISTS product_id VARCHAR(50);
+            ALTER TABLE raw_sales ADD COLUMN IF NOT EXISTS order_date DATE;
             SELECT 'Schema restored successfully' as result;
             """
         ], capture_output=True, text=True, timeout=30)
@@ -158,7 +162,7 @@ def verify_pipeline_health(dag_id: str) -> str:
 
 # ── FIX AGENT ────────────────────────────────────────────────
 
-tools = [delete_bad_rows, restore_schema, retrigger_dag, log_fix_to_audit, verify_pipeline_health]
+tools = [quarantine_bad_rows, restore_schema, retrigger_dag, log_fix_to_audit, verify_pipeline_health]
 llm_with_tools = llm.bind_tools(tools)
 
 
@@ -178,7 +182,7 @@ def run_fix_agent(diagnosis: dict) -> dict:
     system_prompt = """You are a pipeline fix agent. You apply fixes based on a diagnosis.
 
 Fix actions by error type:
-- fix_action='delete_bad_rows': call delete_bad_rows, then retrigger_dag, then verify_pipeline_health
+- fix_action='delete_bad_rows': call quarantine_bad_rows, then retrigger_dag, then verify_pipeline_health
 - fix_action='restore_schema': call restore_schema, then retrigger_dag, then verify_pipeline_health
 - fix_action='restart_task': call retrigger_dag directly, then verify_pipeline_health
 - fix_action='escalate': only call log_fix_to_audit with action='escalated_to_human'

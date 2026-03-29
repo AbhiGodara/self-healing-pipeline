@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Healing Pipeline Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1>Data Pipeline Console</h1>
+            </div>
+            <div class="header-right">
+                <div class="auto-heal-widget" id="auto-heal-widget">
+                    <span>Auto-Heal Check In: </span>
+                    <strong id="timer">05:00</strong>
+                    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+                </div>
+                <button class="btn btn-primary" onclick="triggerHeal()">Trigger Manual Heal</button>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Health Stats -->
+            <div class="card status-card">
+                <h2>Pipeline Health</h2>
+                <div class="health-status" id="health-status">Checking...</div>
+                
+                <div class="metrics">
+                    <div class="metric-box">
+                        <span class="label">Total Rows</span>
+                        <strong id="total-rows">-</strong>
+                    </div>
+                    <div class="metric-box">
+                        <span class="label">Good Rows</span>
+                        <strong id="good-rows" class="success-text">-</strong>
+                    </div>
+                    <div class="metric-box">
+                        <span class="label">Bad Rows</span>
+                        <strong id="bad-rows" class="danger-text">-</strong>
+                    </div>
+                </div>
+                <p style="margin-top: 15px; font-size: 0.9em;">Schema OK: <span id="schema-ok">-</span></p>
+                <button class="btn btn-outline" style="width: 100%; margin-top: 15px;" onclick="fetchHealth()">Refresh Health</button>
+            </div>
+
+            <!-- Inject Failure -->
+            <div class="card inject-card">
+                <h2>Simulate Pipeline Errors</h2>
+                <p>Purposely break the pipeline by injecting corrupted data.</p>
+                <div style="margin: 10px 0;">
+                    <label style="font-size: 0.9em; color: var(--text-muted)">Number of rows to inject:</label>
+                    <input type="number" id="inject-count" value="10" min="1" max="1000" style="width: 80px; display: inline-block; padding: 4px;">
+                </div>
+                <div class="grid-buttons">
+                    <button class="btn btn-danger" onclick="injectFailure('bad_data')">Inject Bad Values</button>
+                    <button class="btn btn-danger" onclick="injectFailure('duplicates')">Inject Duplicates</button>
+                    <button class="btn btn-danger" onclick="injectFailure('corrupt')">Drop Schema Column</button>
+                    <button class="btn btn-danger" onclick="injectFailure('stale')">Delete All Data (Stale)</button>
+                    <button class="btn btn-danger" onclick="injectFailure('volume')">Spike Volume (Anomaly)</button>
+                </div>
+            </div>
+
+            <!-- Manual Data Entry -->
+            <div class="card data-entry-card">
+                <h2>Manual Data Ingestion</h2>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('form')">Single Row</button>
+                    <button class="tab-btn" onclick="switchTab('csv')">Upload CSV</button>
+                </div>
+                
+                <div id="form-tab" class="tab-content active">
+                    <div class="form-group">
+                        <input type="text" id="order_id" placeholder="Order ID (e.g. ORD-123)">
+                        <input type="text" id="product_id" placeholder="Product ID (e.g. PROD-1)">
+                        <input type="text" id="customer_id" placeholder="Customer ID (e.g. CUST-1)">
+                    </div>
+                    <div class="form-group">
+                        <input type="number" id="quantity" placeholder="Quantity">
+                        <input type="number" id="price" placeholder="Price">
+                        <button class="btn btn-success" onclick="submitManualData()">Insert Row</button>
+                    </div>
+                </div>
+
+                <div id="csv-tab" class="tab-content" style="display: none;">
+                    <p style="font-size: 0.85em; margin-bottom: 10px; color: #64748b;">CSV must have columns: order_id, product_id, customer_id, quantity, price</p>
+                    <input type="file" id="csv-file" accept=".csv" />
+                    <button class="btn btn-success" style="margin-top: 10px;" onclick="uploadCsv()">Upload & Parse CSV</button>
+                </div>
+            </div>
+
+            <!-- Data Visualizer -->
+            <div class="card data-card" style="grid-column: 1 / -1;">
+                <h2>Recent Database Rows</h2>
+                <div style="max-height: 400px; overflow-y: auto; overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order Date</th>
+                                <th>Order ID</th>
+                                <th>Product ID</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body">
+                            <tr><td colspan="5">Loading data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Audit Log -->
+            <div class="card audit-card">
+                <h2>AI Agent Audit Log</h2>
+                <div class="log-container" id="audit-log">
+                    Loading agent actions...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Human-In-The-Loop Modal -->
+    <div id="hitl-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="color: var(--danger); margin-bottom: 0.5rem;">⚠️ Human-in-the-Loop required!</h2>
+            <p><strong>DUPLICATE RECORDS DETECTED</strong></p>
+            <p style="font-size: 0.9em; margin-bottom: 1rem; color: var(--text-muted)">Do you want to keep the <strong style="color: white">NEW</strong> data or restore back to the <strong style="color: white">OLD</strong> data?</p>
+            
+            <div class="auto-heal-widget" style="margin-bottom: 1.5rem; text-align: center;">
+                <span style="display: block; font-weight: bold; color: var(--danger); margin-bottom: 5px;">If you do not choose, we will automatically Keep OLD Data in:</span>
+                <strong id="hitl-timer" style="font-size: 1.2em;">15.0</strong>s
+                <div class="progress-bar"><div class="progress-fill" id="hitl-progress-fill" style="width: 100%; transition: none;"></div></div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: space-between;">
+                <button class="btn btn-outline" style="flex: 1" onclick="resolveDuplicate('keep_old')">Keep Old Data</button>
+                <button class="btn btn-primary" style="flex: 1" onclick="resolveDuplicate('keep_new')">Keep New Data</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

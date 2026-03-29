@@ -1,53 +1,53 @@
-self-healing-pipeline/
-│
-├── airflow/
-│   ├── dags/
-│   │   ├── data_ingestion_dag.py       # Main pipeline DAG
-│   │   ├── anomaly_detection_dag.py    # Triggers monitor agent
-│   │   └── cleanup_dag.py
-│   └── plugins/
-│
-├── agents/
-│   ├── monitor_agent.py                # Polls pipeline health
-│   ├── diagnostic_agent.py             # Reads logs, finds root cause
-│   ├── fix_agent.py                    # Takes automated actions
-│   ├── escalation_agent.py             # Human alert logic
-│   └── tools/
-│       ├── log_reader.py               # Tool: read Airflow logs
-│       ├── db_inspector.py             # Tool: query DB health
-│       ├── pipeline_restarter.py       # Tool: restart failed tasks
-│       ├── schema_validator.py         # Tool: validate data schema
-│       └── notifier.py                 # Tool: send Slack/email
-│
-├── orchestrator/
-│   └── langgraph_graph.py              # LangGraph state machine
-│
-├── api/
-│   ├── main.py                         # FastAPI app
-│   ├── routes/
-│   │   ├── incidents.py                # GET /incidents
-│   │   ├── audit.py                    # GET /audit-trail
-│   │   └── health.py                   # GET /pipeline/health
-│   └── models.py
-│
-├── database/
-│   ├── schema.sql
-│   └── audit_logger.py                 # Logs every agent action
-│
-├── frontend/
-│   └── src/
-│       ├── components/
-│       │   ├── IncidentFeed.tsx         # Live incident list
-│       │   ├── AgentTrace.tsx           # Shows agent reasoning
-│       │   ├── PipelineHealth.tsx       # Health status cards
-│       │   └── AuditLog.tsx
-│       └── App.tsx
-│
-├── tests/
-│   ├── test_monitor_agent.py
-│   ├── test_fix_agent.py
-│   └── simulate_failure.py             # Script to inject fake failures
-│
-├── docker-compose.yml
-├── .env.example
-└── README.md
+===============================================
+SELF-HEALING PIPELINE - WORKFLOW & ARCHITECTURE
+===============================================
+
+Below is the definitive reference for how data flows through this project, and how the folders are structured to support the Agentic AI.
+
+---------------------
+1. FOLDER STRUCTURE
+---------------------
+/agents
+   Contains the specialized LangGraph Agents.
+   └── monitor_agent.py      : Checks Pipeline Health & pulls Airflow Logs.
+   └── diagnostic_agent.py   : Classifies the error (data_quality, schema_error, duplicates).
+   └── fix_agent.py          : Possesses SQL "Tools" to fix the database.
+   └── escalation_agent.py   : Halts execution gracefully for Unknowns.
+
+/airflow
+   └── dags/data_ingestion_dag.py : The core pipeline. Fails if data is invalid or schema is broken.
+
+/api
+   └── main.py : The Brain. Contains the FastAPI server that handles Frontend HTTP requests, executes Python background tasks, communicates with Postgres/Airflow, and triggers the LangGraph graph.
+
+/database
+   └── schema.sql : Bootstraps the PostgeSQL schema (raw_sales, quarantine_sales, audit_log).
+
+/frontend
+   └── index.html, style.css, app.js : A lightweight, beautiful Vanilla web dashboard. Contains features for Data Viz, CSV uploads, and Human-in-the-Loop modals.
+
+/orchestrator
+   └── langgraph_graph.py : Assembles the 4 independent agents from the /agents folder into a rigid, cyclical State Graph (Monitor -> Diagnose -> Fix -> Escalate).
+
+---------------------
+2. PIPELINE LIFECYCLE
+---------------------
+1. NORMAL INGESTION:
+   - User inputs data manually or uploads a CSV via the UI.
+   - The data is fully validated rigorously by the JS Frontend.
+   - FastAPI receives the payload, inserts it to `raw_sales`, and manually triggers the Airflow DAG.
+
+2. ANOMALY SIMULATION (E.g. "Inject Bad Data"):
+   - User clicks an injection button on the Web UI.
+   - FastAPI aggressively injects randomized, negative values into Postgres.
+   - FastAPI triggers the Airflow DAG.
+   - Airflow Tasks check `raw_sales`, detect negative metrics, and FAIL the DAG deliberately.
+
+3. THE AI SELF-HEAL CYCLE:
+   - FastAPI periodically calls `/heal` in the background when the dashboard detects unhealthy status.
+   - `langgraph_graph.py` spins up.
+   - [Monitor] Pulls the Airflow stack trace ("price is negative").
+   - [Diagnose] Uses Llama-3 to deduce `error_type=data_quality` & `fix_action=delete_bad_rows`.
+   - [Fix] Connects to DB -> SELECTS negative rows -> MOVES them to `quarantine_sales` -> DELETES from `raw_sales`.
+   - [Fix] Logs its semantic reasoning into `audit_log`.
+   - The UI automatically refreshes, displaying the fixed database and the new Audit Log entry!

@@ -56,7 +56,7 @@ def check_bad_rows_in_db() -> str:
                 SUM(CASE WHEN quantity <= 0 THEN 1 ELSE 0 END) as bad_quantity,
                 SUM(CASE WHEN price <= 0 THEN 1 ELSE 0 END) as bad_price,
                 SUM(CASE WHEN product_id IS NULL THEN 1 ELSE 0 END) as null_products
-            FROM raw_sales WHERE sale_date = CURRENT_DATE;"""
+            FROM raw_sales WHERE order_date = CURRENT_DATE;"""
         ], capture_output=True, text=True, timeout=30)
 
         return result.stdout
@@ -140,14 +140,14 @@ Then return ONLY this JSON:
   "run_id": "<exact run_id>",
   "failed_task": "validate_data",
   "root_cause": "<one sentence explaining why it failed>",
-  "error_type": "data_quality" or "schema_error" or "connection_error" or "unknown",
+  "error_type": "data_quality" or "schema_error" or "duplicates" or "unknown",
   "fix_action": "delete_bad_rows" or "restore_schema" or "restart_task" or "escalate",
   "bad_row_count": <number from db check>,
   "confidence": "high" or "medium" or "low",
   "timestamp": "<now>"
 }
 
-Use ONLY real values from tool results. Never guess."""
+CRITICAL: You must use the tools to gather data ONLY ONE TIME. Once you gather the logs and database schema/rows, DO NOT CALL ANY MORE TOOLS. You must immediately respond with ONLY the final raw JSON structure. Use ONLY real values from tool results. Never guess."""
 
     messages = [
         SystemMessage(content=system_prompt),

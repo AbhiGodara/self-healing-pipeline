@@ -111,7 +111,7 @@ def check_database_health() -> str:
                     SUM(CASE WHEN price <= 0 THEN 1 ELSE 0 END) as bad_price_rows,
                     SUM(CASE WHEN product_id IS NULL THEN 1 ELSE 0 END) as null_product_rows
                 FROM raw_sales
-                WHERE sale_date = CURRENT_DATE;
+                WHERE order_date = CURRENT_DATE;
             """
         ], capture_output=True, text=True, timeout=30)
 

@@ -1,29 +1,49 @@
-1.  docker exec -it self_healing_pipeline-airflow-webserver-1 airflow dags trigger data_ingestion_pipeline
-    exp: it trigger the DAG in terminal in case airflow does not work on browser
-2.  docker exec -it self_healing_pipeline-postgres-1 psql -U pipeline_user -d pipeline_db -c "INSERT INTO raw_sales (product_id, quantity, price, sale_date) SELECT 'BAD-PRODUCT', -99, -1.0, CURRENT_DATE FROM generate_series(1,10);"
-    exp: it inserts the bad rows into the tables
-3.  docker exec -it self_healing_pipeline-postgres-1 psql -U pipeline_user -d pipeline_db -c "SELECT product_id, quantity, price FROM raw_sales WHERE sale_date = CURRENT_DATE ORDER BY quantity;"
-    exp: we see total rows in table
-4.  docker exec -it self_healing_pipeline-postgres-1 psql -U pipeline_user -d pipeline_db -c "SELECT COUNT(*) FROM raw_sales WHERE quantity <= 0;"
-    exp: to check bad rows
-5.  docker exec -it self_healing_pipeline-postgres-1 psql -U pipeline_user -d pipeline_db -c "
-    INSERT INTO raw_sales (product_id, quantity, price, sale_date) VALUES
-    ('GOOD-001', 10, 25.50, CURRENT_DATE),
-    ('GOOD-002', 5, 100.00, CURRENT_DATE),
-    ('GOOD-003', 20, 75.99, CURRENT_DATE),
-    ('GOOD-004', 3, 49.99, CURRENT_DATE),
-    ('GOOD-005', 15, 200.00, CURRENT_DATE),
-    ('GOOD-006', 8, 33.33, CURRENT_DATE),
-    ('GOOD-007', 12, 88.88, CURRENT_DATE),
-    ('GOOD-008', 1, 500.00, CURRENT_DATE),
-    ('GOOD-009', 7, 60.00, CURRENT_DATE),
-    ('GOOD-010', 25, 15.00, CURRENT_DATE);"
-    exp: enter some good values
-6.  docker exec -it self_healing_pipeline-airflow-webserver-1 airflow dags list-runs -d data_ingestion_pipeline
-    exp: to check the list of runs
-7.  docker exec -it self_healing_pipeline-airflow-webserver-1 airflow dags pause data_ingestion_pipeline
-    exp: clear all queued runs
-8.  docker-compose restart airflow-scheduler
-    exp: restart the container
-9. docker exec -it self_healing_pipeline-airflow-webserver-1 airflow dags pause data_ingestion_pipeline
-    exp: pause
+=================================
+IMPORTANT PIPELINE COMMAND CHEATSHEET
+=================================
+
+=== API / BACKEND COMMANDS ===
+Start the FastAPI server (Run this in your pipeline root directory, with your SHPenv virtual env activated):
+> uvicorn api.main:app --reload
+
+=== DOCKER COMPOSE COMMANDS ===
+Start Background Infrastructure (Postgres, Airflow):
+> docker-compose up -d
+
+Stop Background Infrastructure:
+> docker-compose down
+
+Rebuild Infrastructure completely from scratch (destroys old data):
+> docker-compose down -v
+> docker-compose up -d --build
+
+=== DB INTERACTION (PSQL) ===
+Access the main pipeline database manually through the Docker container:
+> docker exec -it self_healing_pipeline-postgres-1 psql -U pipeline_user -d pipeline_db
+
+-- Important SQL Queries to run inside PSQL:
+Show the main sales tracking table:
+=> SELECT * FROM raw_sales;
+
+Show exactly what data the AI safely deleted and quarantined:
+=> SELECT * FROM quarantine_sales;
+
+Show the AI Agent's thought process tracking log:
+=> SELECT agent_name, action_taken, success, created_at FROM audit_log;
+
+Check exactly which tables currently exist:
+=> \dt
+
+Exit PSQL:
+=> \q
+
+=== AIRFLOW CLI COMMANDS ===
+List the last 10 pipeline executions directly from the CLI to ensure it hasn't crashed:
+> docker exec self_healing_pipeline-airflow-webserver-1 airflow dags list-runs -d data_ingestion_pipeline
+
+Manually Trigger the DAG from backend:
+> docker exec self_healing_pipeline-airflow-webserver-1 airflow dags trigger data_ingestion_pipeline
+
+=== ENVIRONMENT SETUP ===
+To activate your virtual environment (Windows Powershell):
+> .\enviorenments\SHPenv\Scripts\Activate.ps1
