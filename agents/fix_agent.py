@@ -81,7 +81,7 @@ def retrigger_dag(dag_id: str) -> str:
             "airflow", "dags", "trigger", dag_id
         ], capture_output=True, text=True, timeout=30)
 
-        time.sleep(10)  # wait for run to start
+        time.sleep(10) 
 
         # Check if new run started
         check = subprocess.run([

@@ -46,7 +46,6 @@ def get_recent_dag_runs(dag_id: str) -> str:
         if not runs:
             return "No runs found."
 
-        # Format clearly for the LLM
         output = "Recent DAG runs:\n"
         for r in runs[:5]:
             output += f"- run_id: {r['run_id']} | state: {r['state']}\n"
@@ -163,7 +162,6 @@ def run_monitor_agent(dag_id: str = "data_ingestion_pipeline") -> dict:
         HumanMessage(content=f"Check the health of DAG: {dag_id}. Investigate any failures and return your incident report JSON.")
     ]
 
-    # Agentic loop — keep going until no more tool calls
     MAX_ITERATION=6
     iteration=0
     while iteration<MAX_ITERATION:
@@ -171,11 +169,9 @@ def run_monitor_agent(dag_id: str = "data_ingestion_pipeline") -> dict:
         messages.append(response)
         iteration+=1
 
-        # If no tool calls, agent is done
         if not response.tool_calls:
             break
 
-        # Execute each tool call
         for tool_call in response.tool_calls:
             tool_name = tool_call["name"]
             tool_args = tool_call["args"]

@@ -6,21 +6,17 @@ An enterprise-grade, autonomous Data Engineering pipeline that uses Agentic AI (
 
 ## 📸 Project Showcase
 
-### 1. The Real-Time Dashboard
-![Dashboard Viewer](assets/screenshot1.png)
-> *The central Vanilla JS/HTML dashboard interacting with the FastAPI backend. Features live health monitoring, anomaly injection controls, and a scrollable real-time data table.*
-
-### 2. Human-In-The-Loop (HITL) Duplicate Resolution
-![HITL Output](assets/screenshot2.png)
+### 1. Human-In-The-Loop (HITL) Duplicate Resolution
+![HITL Output](assets/image1.png)
 > *When exact duplicate rows enter the pipeline, the AI halts to prevent data destruction. It triggers a 15-second User Interface modal allowing a human to confidently choose between keeping the New payload or reverting to the Old payload.*
 
-### 3. The LangGraph Agentic Backend
-![Agent Terminal Logging](assets/screenshot3.png)
-> *Under the hood, LangGraph forces the AI into a strict State Machine. Here, the `Diagnostic Agent` systematically pulls Airflow stack traces, queries PostgreSQL schema info, and mathematically calculates the bad row count.*
+### 2. The Real-Time Dashboard
+![Dashboard Viewer](assets/image2.png)
+> *The central simple dashboard interacting with the FastAPI backend. Features live health monitoring, anomaly injection controls, and a scrollable real-time data table.*
 
-### 4. Apache Airflow Execution
-![Airflow DAG](assets/screenshot4.png)
-> *The Apache Airflow infrastructure tracking the `data_ingestion_pipeline`. If the data violates quality validators, the DAG deliberately fails, alerting the FastAPI backend to wake up the LLM.*
+### 3. The LangGraph Agentic Backend
+![Agent Terminal Logging](assets/image3.png)
+> *Under the hood, LangGraph forces the AI into a strict State Machine. Here you can see the diagnostic and fix agents systematically parsing Airflow stack traces, determining the root cause, and successfully applying the SQL fix autonomously.*
 
 ---
 
@@ -33,7 +29,7 @@ This project introduces a **Self-Healing Layer** using an LLM-powered state mach
 * **Database:** PostgreSQL *(Running in Docker)*
 * **Backend:** FastAPI (Python)
 * **AI Orchestrator:** LangGraph + Llama-3 (via Groq API)
-* **Frontend:** Vanilla HTML/JS/CSS (No bloat)
+* **Frontend:**  HTML/JS/CSS
 
 ## ✨ Key Features
 1. **Agentic State Machine:** A heavily constrained LangGraph containing four independent agents:
@@ -57,7 +53,7 @@ This project introduces a **Self-Healing Layer** using an LLM-powered state mach
 /airflow/dags       # Airflow DAG logic (data_ingestion_dag.py)
 /api                # FastAPI brain handling routes, background tasks, and DB connections
 /database           # Bootstrapping SQL schema (raw_sales, quarantine_sales, audit_log)
-/frontend           # Vanilla HTML/JS/CSS Dashboard
+/frontend           # HTML/JS/CSS Dashboard
 /orchestrator       # langgraph_graph.py state machine connecting the agents
 ```
 
